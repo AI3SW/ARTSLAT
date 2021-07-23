@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+  <script src="./bundle.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <p id="demo1"></p>
+    <canvas class="output_canvas"  width="1280px" height="720px">
+      <video class="input_video"></video>
+    </canvas>
+    <p id="demo2"></p>
+  </div>
+</body>
+</html>
+
+<!--<style>-->
+<!--  body {background-color: #000000;}-->
+<!--</style>-->
+
+
+
+<script type="module">
+
+  const model = await tf.loadLayersModel('./model.json')
+
+  const videoElement = document.getElementsByClassName('input_video')[0];
+  const canvasElement = document.getElementsByClassName('output_canvas')[0];
+  const canvasCtx = canvasElement.getContext('2d');
+
+
+  const classconversion = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'H',
+                   8: 'I', 9: 'J', 10: 'K', 11: 'L', 12: 'M', 13: 'N', 14: 'O',
+                   15: 'P', 16: 'Q', 17: 'R', 18: 'S', 19: 'T', 20: 'U', 21: 'V',
+                   22: 'W', 23: 'X', 24: 'Y', 25: 'Z', 26: 'del', 27: 'nothing', 28: 'space'}
+
+  const alphabet_coords = ['B', '0.0', '0.0', '0.0', '0.36735334081640764', '-0.06388753753328828', '-0.002278109522014282', '0.5909597221829166', '-0.36735334081640764', '-0.0034830028472945395', '0.41526899396637384', '-0.6708191440995269', '-0.00420802062517177', '0.14374695944989863', '-0.7826223347827814', '-0.004472256375462551', '0.44721276273301797', '-0.8944255254660359', '-0.0019298299165817277', '0.4312408783496959', '-1.3096945194324099', '-0.0028174847373590305', '0.41526899396637384', '-1.581216553948885', '-0.0034790841834892424', '0.38332522519972967', '-1.820794819698716', '-0.004071645412756464', '0.22360638136650898', '-0.9583130629993243', '-0.0015269590284481772', '0.20763449698318692', '-1.4055258257323422', '-0.0020272800525305812', '0.22360638136650898', '-1.6930197446321396', '-0.0024647378789884', '0.20763449698318692', '-1.9645417791486146', '-0.0029344717864235367', '0.0', '-0.9263692942326801', '-0.001418367178112371', '0.01597188438332207', '-1.3416382881990538', '-0.0019223895723435743', '0.01597188438332207', '-1.6291322070988512', '-0.0023596479551166775', '0.03194376876664414', '-1.8527385884653602', '-0.0028846244312232443', '-0.22360638136650898', '-0.8145661035494256', '-0.0016223993765741443', '-0.19166261259986483', '-1.165947559982511', '-0.0020729055324049', '-0.17569072821654277', '-1.38955394134902', '-0.002539999786012855', '-0.15971884383322071', '-1.597188438332207', '-0.002995152408498382']
+
+
+  const avg_of_frames = 5;
+  var frame_averages = new Array(avg_of_frames);
+  for (var i = 0; i < frame_averages.length; i++) {
+    frame_averages[i] = new Array(42).fill(0);
+  }
+  var counter = 0;
+  var rolling = new Array(42).fill(0);
+  const min_accuracy = 0.5;
+
+  const z_scale = 1
+
+  function Normalise(lms, height, width){
+    //FIRST HAND ONLY
+    var normalised_landmarks = new Array(42);
+
+    var basex = lms[0][0].x * width;
+    var basey = lms[0][0].y * height;
+    var thumbx = lms[0][1].x * width;
+    var thumby = lms[0][1].y * height;
+
+    var scale_factor = (((thumbx - basex) ** 2) + ((thumby - basey) ** 2)) ** 0.5;
+
+    for (let index = 0; index < lms[0].length; index++) {
+      normalised_landmarks[index*2] = ( (lms[0][index].x * width) - basex) / scale_factor;
+      normalised_landmarks[index*2+1] = ( (lms[0][index].y * height) - basey) / scale_factor;
+    }
+
+    return normalised_landmarks;
+  }
+
+  function rotationmatrix(base,dest){
+
+    const a = math.divide(base,math.norm(base))
+    const b = math.divide(dest, math.norm(dest))
+    const v = math.cross(a,b)
+    const c = math.dot(a,b)
+    const s = math.norm(v)
+    const eye = math.identity(3,3)
+    const kmat = math.matrix([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    const rotation_matrix = math.add(eye,kmat,math.multiply(math.multiply(kmat,kmat), ((1 - c) / (s**2)) ) )
+
+    return rotation_matrix
+  }
+
+  function UnNormalise(lms, height, width, alphabet_coord){
+    //FIRST HAND ONLY
+    var unnormalised_landmarks = new Array(21);
+
+    var basex = lms[0][0].x;
+    var basey = lms[0][0].y;
+    var basez = lms[0][0].z;
+    var thumbx = lms[0][5].x;
+    var thumby = lms[0][5].y;
+    var thumbz = lms[0][5].z;
+
+    //const normalised_lms = Normalise2(lms, height, width) //ONLY TO CALC ROTATION MATRIX
+    const scale_factor = ( ((thumbx-basex)**2) + ((thumby-basey)**2) + ((thumbz-basez)**2) )**0.5;
+
+    //NORMAL VECTOR CALCULATION
+    const base_vector05 = [alphabet_coord[15+1],alphabet_coord[15+2],alphabet_coord[15+3]] //+1 cos the first item in alpha coord is the letter
+    const base_vector017 = [alphabet_coord[51+1],alphabet_coord[51+2],alphabet_coord[51+3]]
+    const base_normalvector = math.cross(base_vector05, base_vector017)
+
+    const dest_vector05 = [(thumbx-basex), (thumby-basey), (thumbz-basez)]
+    const dest_vector017 = [(lms[0][17].x-basex), (lms[0][17].y-basey), (lms[0][17].z-basez)]
+    const dest_normalvector = math.cross(dest_vector05,dest_vector017)
+
+    const RM = rotationmatrix(base_normalvector,dest_normalvector)
+
+    //USING OG LMS TO SCALE TO CORRECT WIDTH
+    for (let index = 0; index < lms[0].length; index++) {
+
+      const x = alphabet_coord[index*3 + 1];
+      const y = alphabet_coord[index*3 + 2];
+      const z = alphabet_coord[index*3 + 3];
+
+      var vector = math.matrix([[x],[y],[z]])
+      var finalvector = math.multiply(RM, vector)
+
+      // const x = (alphabet_coord[index*3 + 1] * scale_factor) + lms[0][0].x
+      // const y = (alphabet_coord[index*3 + 2] * scale_factor) + lms[0][0].y
+      // const z = (alphabet_coord[index*3 + 3] * scale_factor) + lms[0][0].z
+
+      // console.log(finalvector);
+
+      var tempJson = {
+        "x": finalvector.subset(math.index(0,0)) * scale_factor + lms[0][0].x,
+        "y": finalvector.subset(math.index(1,0)) * scale_factor + lms[0][0].y,
+        "z": (finalvector.subset(math.index(2,0)) * scale_factor + lms[0][0].z) * z_scale,
+      };
+      unnormalised_landmarks[index] = tempJson;
+    }
+
+    return unnormalised_landmarks;
+  }
+
+  function indexOfMax(arr) {
+    if (arr.length === 0) {
+        return -1;
+    }
+
+    var max = arr[0];
+    var maxIndex = 0;
+
+    for (var i = 1; i < arr.length; i++) {
+        if (arr[i] > max) {
+            maxIndex = i;
+            max = arr[i];
+        }
+    }
+
+    return maxIndex;
+}
+
+
+  function onResults(results) {
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(
+        results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+    if (results.multiHandLandmarks) {
+
+      //Predict
+      var normalised_landmarks = Normalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width);
+      var unnormalised_landmarks = UnNormalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width, alphabet_coords);
+      var format_lms = tf.stack(normalised_landmarks).reshape([1, 42, 1]);
+      const prediction = model.predict(format_lms);
+      document.getElementById("demo1").innerHTML = JSON.stringify(unnormalised_landmarks);
+
+
+      //Rolling Average
+      frame_averages[counter] = prediction.arraySync()[0];
+
+      for (var j = 0; j < avg_of_frames; j++) {
+        for (var p = 0; p < 42; p++) {
+          rolling[p] = rolling[p] + frame_averages[j][p];
+        }
+      }
+
+      var index = indexOfMax(rolling);
+      if (rolling[index] >= min_accuracy * avg_of_frames) {
+        var letter = classconversion[index];
+      } else {
+        var letter = 'test';
+      }
+      rolling = new Array(42).fill(0); // RESET ROLLING
+
+      counter = counter + 1;
+      if (counter == avg_of_frames) {
+        counter = 0;
+      }
+
+      canvasCtx.font = "bolder 30px Arial";
+      canvasCtx.fillText(letter, 10, 50);
+      document.getElementById("demo2").innerHTML = JSON.stringify(results.multiHandLandmarks);
+      //End of Rolling Average
+
+
+      //Mediapipe Drawings
+      for (let index = 0; index < results.multiHandLandmarks.length; index++) {
+
+        const classification = results.multiHandedness[index];
+        const isRightHand = classification.label === 'Left';
+        const landmarks = results.multiHandLandmarks[index];
+
+        if (isRightHand) {
+        drawConnectors(
+                canvasCtx, unnormalised_landmarks, HAND_CONNECTIONS,
+                {color: isRightHand ? '#00ff00' : '#FF0000', lineWidth: 5}),
+
+        drawLandmarks(canvasCtx, unnormalised_landmarks, {
+          color: isRightHand ? '#00FF00' : '#FF0000',
+          fillColor: isRightHand ? '#FF0000' : '#00FF00',
+          radius: (x) => {
+            return lerp(x.from.z, -0.15, .1, 10, 1);
+          }
+        });
+
+
+        // FOR TESTING PURPOSES ONLY
+
+
+        drawConnectors(
+            canvasCtx, landmarks, HAND_CONNECTIONS,
+            {color: isRightHand ? '#00eaff' : '#FF0000', lineWidth: 1})
+
+        // drawLandmarks(canvasCtx, landmarks, {
+        //   color: isRightHand ? '#ff6a00' : '#FF0000',
+        //   fillColor: isRightHand ? '#d500ff' : '#00FF00',
+        //   radius: 2
+        // });
+
+
+        // END FOR TESTING PURPOSES
+
+        }
+      }
+    }
+    canvasCtx.restore();
+  }
+
+
+  const hands = new Hands({locateFile: (file) => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+  }});
+
+
+  hands.setOptions({
+    maxNumHands: 2,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.5
+  });
+
+
+  hands.onResults(onResults);
+
+
+  const camera = new Camera(videoElement, {
+    onFrame: async () => {
+      await hands.send({image: videoElement});
+    },
+    width: 1920,
+    height: 1080
+  });
+
+
+  camera.start();
+
+
+</script>
