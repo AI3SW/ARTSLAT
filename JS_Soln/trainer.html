@@ -9,15 +9,17 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
   <script src="./bundle.js"></script>
+  <script src="./data.js"></script>
 </head>
 
 <body>
   <div class="container">
     <p id="demo1"></p>
+    <p id="demo2"></p>
     <canvas class="output_canvas"  width="1280px" height="720px">
       <video class="input_video"></video>
     </canvas>
-    <p id="demo2"></p>
+
   </div>
 </body>
 </html>
@@ -42,9 +44,8 @@
                    15: 'P', 16: 'Q', 17: 'R', 18: 'S', 19: 'T', 20: 'U', 21: 'V',
                    22: 'W', 23: 'X', 24: 'Y', 25: 'Z', 26: 'del', 27: 'nothing', 28: 'space'}
 
-  const alphabet_coords = ['B', '0.0', '0.0', '0.0', '0.36735334081640764', '-0.06388753753328828', '-0.09112438088057129', '0.5909597221829166', '-0.36735334081640764', '-0.1393201138917816', '0.41526899396637384', '-0.6708191440995269', '-0.1683208250068708', '0.14374695944989863', '-0.7826223347827814', '-0.17889025501850203', '0.44721276273301797', '-0.8944255254660359', '-0.07719319666326911', '0.4312408783496959', '-1.3096945194324099', '-0.11269938949436122', '0.41526899396637384', '-1.581216553948885', '-0.1391633673395697', '0.38332522519972967', '-1.820794819698716', '-0.16286581651025855', '0.22360638136650898', '-0.9583130629993243', '-0.06107836113792709', '0.20763449698318692', '-1.4055258257323422', '-0.08109120210122325', '0.22360638136650898', '-1.6930197446321396', '-0.09858951515953601', '0.20763449698318692', '-1.9645417791486146', '-0.11737887145694147', '0.0', '-0.9263692942326801', '-0.05673468712449484', '0.01597188438332207', '-1.3416382881990538', '-0.07689558289374297', '0.01597188438332207', '-1.6291322070988512', '-0.0943859182046671', '0.03194376876664414', '-1.8527385884653602', '-0.11538497724892977', '-0.22360638136650898', '-0.8145661035494256', '-0.06489597506296577', '-0.19166261259986483', '-1.165947559982511', '-0.082916221296196', '-0.17569072821654277', '-1.38955394134902', '-0.1015999914405142', '-0.15971884383322071', '-1.597188438332207', '-0.11980609633993528']
 
-
+  //Predict + Rolling Variables
   const avg_of_frames = 5;
   var frame_averages = new Array(avg_of_frames);
   for (var i = 0; i < frame_averages.length; i++) {
@@ -54,7 +55,20 @@
   var rolling = new Array(42).fill(0);
   const min_accuracy = 0.5;
 
-  const z_scale = 1;
+  //Smoothening Variables
+  var old_coord = new Array(21)
+  for (var e = 0; e < 21; e++){
+    old_coord[e] = {
+      "x": 0.5,
+      "y": 0.5,
+      "z": 0
+    }
+  }
+  const smooth_variable = 5;
+
+  // Trainer Variables
+  var alphaindex = math.randomInt(0,25) //To initialise the first word
+  var alphabet_coords = data[alphaindex]
 
 
 
@@ -133,7 +147,7 @@
       var tempJson = {
         "x": finalvector.subset(math.index(0,0)) * scale_factor + lms[0][0].x,
         "y": finalvector.subset(math.index(1,0)) * scale_factor + lms[0][0].y,
-        "z": (finalvector.subset(math.index(2,0)) * scale_factor + lms[0][0].z) * z_scale,
+        "z": (finalvector.subset(math.index(2,0)) * scale_factor + lms[0][0].z),
       };
       unnormalised_landmarks[index] = tempJson;
     }
@@ -173,10 +187,37 @@
 
       //Predict
       var normalised_landmarks = Normalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width);
-      var unnormalised_landmarks = UnNormalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width, alphabet_coords);
       var format_lms = tf.stack(normalised_landmarks).reshape([1, 42, 1]);
       const prediction = model.predict(format_lms);
-      document.getElementById("demo1").innerHTML = JSON.stringify(unnormalised_landmarks);
+
+
+      var unnormalised_landmarks = UnNormalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width, alphabet_coords);
+
+      //SMOOTHENING IMPLEMENTATION
+      // THIS IS BAD CODE PLS PLS PLS REDO
+      var stp = new Array(21)
+      for (let index = 0; index < 21; index++) {
+        // stp = prev + (new - prev) / smooth_variable
+        stp[index] = {
+          "x": old_coord[index].x + (unnormalised_landmarks[index].x - old_coord[index].x)/smooth_variable,
+          "y": old_coord[index].y + (unnormalised_landmarks[index].y - old_coord[index].y)/smooth_variable,
+          "z": old_coord[index].z + (unnormalised_landmarks[index].z - old_coord[index].z)/smooth_variable
+        }
+      }
+      // prev = stp
+
+      old_coord = stp //Send to print in case yorue wondering
+
+      //WRITE ALPHABET
+      var basecoords = [stp[0].x * canvasElement.width, stp[0].y * canvasElement.height]
+
+      canvasCtx.font = "bolder 70px Arial";
+      canvasCtx.fillStyle = "#7DF9FF";
+      canvasCtx.fillText(alphabet_coords[0], basecoords[0], basecoords[1]+70);
+
+      //document.getElementById("demo2").innerHTML = JSON.stringify(stp);
+    // END SMOOTHENING
+
 
 
       //Rolling Average
@@ -192,7 +233,7 @@
       if (rolling[index] >= min_accuracy * avg_of_frames) {
         var letter = classconversion[index];
       } else {
-        var letter = 'test';
+        var letter = ' ';
       }
       rolling = new Array(42).fill(0); // RESET ROLLING
 
@@ -200,11 +241,17 @@
       if (counter == avg_of_frames) {
         counter = 0;
       }
-
-      canvasCtx.font = "bolder 30px Arial";
-      canvasCtx.fillText(letter, 10, 50);
-      document.getElementById("demo2").innerHTML = JSON.stringify(results.multiHandLandmarks);
       //End of Rolling Average
+
+      if (letter == alphabet_coords[0]) {
+        alphaindex = math.randomInt(0,25) //To initialise the first word
+        alphabet_coords = data[alphaindex]
+      }
+
+      canvasCtx.font = "bolder 90px Arial";
+      canvasCtx.fillStyle = "#DE6B48";
+      canvasCtx.fillText(letter, 640, 90);
+
 
 
       //Mediapipe Drawings
@@ -216,12 +263,12 @@
 
         if (isRightHand) {
         drawConnectors(
-                canvasCtx, unnormalised_landmarks, HAND_CONNECTIONS,
-                {color: isRightHand ? '#00ff00' : '#FF0000', lineWidth: 5}),
+                canvasCtx, stp, HAND_CONNECTIONS,
+                {color: isRightHand ? '#7df9ff' : '#FF0000', lineWidth: 5}),
 
-        drawLandmarks(canvasCtx, unnormalised_landmarks, {
-          color: isRightHand ? '#00FF00' : '#FF0000',
-          fillColor: isRightHand ? '#FF0000' : '#00FF00',
+        drawLandmarks(canvasCtx, stp, {
+          color: isRightHand ? '#fb3640' : '#FF0000',
+          fillColor: isRightHand ? '#fcf7f8' : '#00FF00',
           radius: (x) => {
             return lerp(x.from.z, -0.15, .1, 10, 1);
           }
@@ -231,9 +278,9 @@
         // FOR TESTING PURPOSES ONLY
         // return lerp(x.from.z, -0.15, .1, 10, 1);
 
-        drawConnectors(
-            canvasCtx, landmarks, HAND_CONNECTIONS,
-            {color: isRightHand ? '#00eaff' : '#FF0000', lineWidth: 1})
+        // drawConnectors(
+        //     canvasCtx, landmarks, HAND_CONNECTIONS,
+        //     {color: isRightHand ? '#00eaff' : '#FF0000', lineWidth: 1})
 
 
 
