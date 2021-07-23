@@ -55,6 +55,7 @@
   var rolling = new Array(42).fill(0);
   const min_accuracy = 0.5;
 
+
   //Smoothening Variables
   var old_coord = new Array(21)
   for (var e = 0; e < 21; e++){
@@ -66,14 +67,14 @@
   }
   const smooth_variable = 5;
 
+
   // Trainer Variables
   var alphaindex = math.randomInt(0,25) //To initialise the first word
   var alphabet_coords = data[alphaindex]
 
 
-
+  // Normalise takes the coordinates of the first hand and normalises it so the model recognises it
   function Normalise(lms, height, width){
-    //FIRST HAND ONLY
     var normalised_landmarks = new Array(42);
 
     var basex = lms[0][0].x * width;
@@ -92,7 +93,8 @@
   }
 
 
-
+  // Rotation Matrix returns the rotation matrix to turn a norm of a 3d
+  // base vector to the norm of a e3d destination vector
   function rotationmatrix(base,dest){
     //please neaten tq
     const a = math.divide(base,math.norm(base))
@@ -108,7 +110,8 @@
   }
 
 
-
+  // UnNormalise attempts to map a set of predetermined alphabet coordinate to the user's own hand coordinates
+  // This is primarily done through the plane-normal method
   function UnNormalise(lms, height, width, alphabet_coord){
     //FIRST HAND ONLY
     var unnormalised_landmarks = new Array(21);
@@ -156,7 +159,7 @@
   }
 
 
-
+  // Returns index of max value in an array
   function indexOfMax(arr) {
     if (arr.length === 0) {
         return -1;
@@ -176,7 +179,7 @@
 }
 
 
-
+  // Main loop
   function onResults(results) {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
@@ -185,11 +188,10 @@
 
     if (results.multiHandLandmarks) {
 
-      //Predict
+      // Predict
       var normalised_landmarks = Normalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width);
       var format_lms = tf.stack(normalised_landmarks).reshape([1, 42, 1]);
       const prediction = model.predict(format_lms);
-
 
       var unnormalised_landmarks = UnNormalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width, alphabet_coords);
 
@@ -204,23 +206,20 @@
           "z": old_coord[index].z + (unnormalised_landmarks[index].z - old_coord[index].z)/smooth_variable
         }
       }
+
       // prev = stp
+      old_coord = stp //Send to print in case youre wondering
 
-      old_coord = stp //Send to print in case yorue wondering
-
-      //WRITE ALPHABET
+      // Write the alphabet below the user's hand
       var basecoords = [stp[0].x * canvasElement.width, stp[0].y * canvasElement.height]
-
       canvasCtx.font = "bolder 70px Arial";
       canvasCtx.fillStyle = "#7DF9FF";
       canvasCtx.fillText(alphabet_coords[0], basecoords[0], basecoords[1]+70);
 
-      //document.getElementById("demo2").innerHTML = JSON.stringify(stp);
     // END SMOOTHENING
 
 
-
-      //Rolling Average
+      // Rolling Average Implementation
       frame_averages[counter] = prediction.arraySync()[0];
 
       for (var j = 0; j < avg_of_frames; j++) {
@@ -243,46 +242,47 @@
       }
       //End of Rolling Average
 
-      if (letter == alphabet_coords[0]) {
-        alphaindex = math.randomInt(0,25) //To initialise the first word
-        alphabet_coords = data[alphaindex]
-      }
-
+      // Write letter
       canvasCtx.font = "bolder 90px Arial";
       canvasCtx.fillStyle = "#DE6B48";
       canvasCtx.fillText(letter, 640, 90);
 
 
+      // Check if user succeded
+      if (letter == alphabet_coords[0]) {
+        alphaindex = math.randomInt(0,25) //To initialise the first word
+        alphabet_coords = data[alphaindex]
+      }
 
-      //Mediapipe Drawings
+
+      // Mediapipe Drawings
       for (let index = 0; index < results.multiHandLandmarks.length; index++) {
 
         const classification = results.multiHandedness[index];
-        const isRightHand = classification.label === 'Left';
+        const isRightHand = classification.label === 'Left'; // SINCE NOT INVERTED
         const landmarks = results.multiHandLandmarks[index];
 
         if (isRightHand) {
         drawConnectors(
                 canvasCtx, stp, HAND_CONNECTIONS,
-                {color: isRightHand ? '#7df9ff' : '#FF0000', lineWidth: 5}),
+                {color: '#7df9ff', lineWidth: 5}),
 
         drawLandmarks(canvasCtx, stp, {
-          color: isRightHand ? '#fb3640' : '#FF0000',
-          fillColor: isRightHand ? '#fcf7f8' : '#00FF00',
+          color:'#fb3640',
+          fillColor:'#fcf7f8',
           radius: (x) => {
             return lerp(x.from.z, -0.15, .1, 10, 1);
           }
         });
 
 
-        // FOR TESTING PURPOSES ONLY
+        // FOR TESTING PURPOSES ONLY, DRAWS ORIGINAL HAND
+
         // return lerp(x.from.z, -0.15, .1, 10, 1);
 
         // drawConnectors(
         //     canvasCtx, landmarks, HAND_CONNECTIONS,
         //     {color: isRightHand ? '#00eaff' : '#FF0000', lineWidth: 1})
-
-
 
         // END FOR TESTING PURPOSES
 
