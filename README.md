@@ -58,6 +58,7 @@ one could see a 3d representation of the signed letter. To track rotation, a for
 was required.
 
 #### Coordinate Transformation
+![planenormalmthd](https://i.imgur.com/uUFMetr.gif)
 1. **_Assume the palm as a flat 2d plane in a 3d space_**
     * Let the origin be located at the wrist joint
     * Take 2 vectors, both starting at the wrist to the metacarpophalangeal 
