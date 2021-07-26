@@ -44,6 +44,8 @@
                    15: 'P', 16: 'Q', 17: 'R', 18: 'S', 19: 'T', 20: 'U', 21: 'V',
                    22: 'W', 23: 'X', 24: 'Y', 25: 'Z', 26: 'del', 27: 'nothing', 28: 'space'}
 
+  const testalphacoords = ['A', 0.0, 0.0, 0.0, 0.44666664731179245, -0.10666666204460715, -0.10115984705440276, 0.7799999662011898, -0.4533333136895804, -0.18243040415501768, 0.8933332946235849, -0.8466666299790693, -0.2606690842070688, 0.8933332946235849, -1.133333284223951, -0.295621271224085, 0.5999999740009152, -0.7999999653345536, -0.07359671093603316, 0.6733333041565827, -1.0733332868238594, -0.23120750298196313, 0.5999999740009152, -0.7599999670678259, -0.18406255310512454, 0.5933333076231273, -0.6999999696677345, -0.07605439659814148, 0.31999998613382147, -0.8266666308457055, -0.0856367617355046, 0.39333331628948887, -1.0733332868238594, -0.3429049136527256, 0.3399999852671853, -0.6399999722676429, -0.32494357626860065, 0.3533333180227612, -0.6866666369121586, -0.22140772991220248, 0.04666666464451563, -0.7999999653345536, -0.1268328578806756, 0.09333332928903126, -1.00666662304598, -0.3466408084490207, 0.0999999956668192, -0.6066666403787032, -0.31000190939902383, 0.10666666204460715, -0.6466666386454308, -0.2206333414337825, -0.2266666568447902, -0.753333300690038, -0.17273596987269868, -0.17999999220027457, -0.9399999592681005, -0.27167647216291946, -0.12666666117797099, -0.6599999714010067, -0.25396890154292956, -0.13333332755575894, -0.6466666386454308, -0.20219812230895873]
+
 
   //Predict + Rolling Variables
   const avg_of_frames = 5;
@@ -65,13 +67,38 @@
       "z": 0
     }
   }
-  const smooth_variable = 5;
+  var stp = new Array(21)
+  for (var y = 0; y < 21; y++){
+    stp[y] = {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    }
+  }
+  var smooth_variable = 5;
+  var smooth_variable_z = 5;
 
 
   // Trainer Variables
   var alphaindex = math.randomInt(0,25) //To initialise the first word
   var alphabet_coords = data[alphaindex]
 
+
+  // Outputs sum of changes between old and new coordinates
+  function Change(oldJSON, newJSON) {
+    var change = new Array(3).fill(0);
+
+    for (let k = 0; k < 21; k++) {
+
+      change[0] = newJSON[k].x - oldJSON[k].x + change[0]
+      change[1] = newJSON[k].y - newJSON[k].y + change[1]
+      change[2] = newJSON[k].z - newJSON[k].z + change[2]
+
+      }
+
+    return change
+
+  }
 
   // Normalise takes the coordinates of the first hand and normalises it so the model recognises it
   function Normalise(lms, height, width){
@@ -94,7 +121,7 @@
 
 
   // Rotation Matrix returns the rotation matrix to turn a norm of a 3d
-  // base vector to the norm of a e3d destination vector
+  // base vector to the norm of a 3d destination vector
   function rotationmatrix(base,dest){
     //please neaten tq
     const a = math.divide(base,math.norm(base))
@@ -124,7 +151,7 @@
     var thumbz = lms[0][5].z;
 
     //const normalised_lms = Normalise2(lms, height, width) //ONLY TO CALC ROTATION MATRIX
-    const scale_factor = ( ((thumbx-basex)**2) + ((thumby-basey)**2) )**0.5;
+    const scale_factor = ( ((thumbx-basex)**2) + ((thumby-basey)**2))**0.5;
 
     //NORMAL VECTOR CALCULATION
     const base_vector05 = [alphabet_coord[15+1],alphabet_coord[15+2],alphabet_coord[15+3]] //+1 cos the first item in alpha coord is the letter
@@ -188,22 +215,37 @@
 
     if (results.multiHandLandmarks) {
 
-      // Predict
+      // Predict ===========================================================================
       var normalised_landmarks = Normalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width);
       var format_lms = tf.stack(normalised_landmarks).reshape([1, 42, 1]);
       const prediction = model.predict(format_lms);
 
-      var unnormalised_landmarks = UnNormalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width, alphabet_coords);
+      var unnormalised_landmarks = UnNormalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width, testalphacoords); // alphabet_coords OR testalphacoords
 
-      //SMOOTHENING IMPLEMENTATION
+
+      // SMOOTHENING IMPLEMENTATION ========================================================
       // THIS IS BAD CODE PLS PLS PLS REDO
-      var stp = new Array(21)
+
+      // // CHANGE IMPLEMENTATION
+      // // THIS IS BAD, DO NOT LOOP TWICE!!!
+      // const change = Change(old_coord, unnormalised_landmarks) // THIS ESP OMG THIS RUNS THROUGH JSON TWICE!!!!!!!!!!!!! PLS DELETE
+      //
+      // if (change[2] *2 - change[1] - change[0] > 2){
+      //   smooth_variable_z = 100;
+      //   smooth_variable = 100;
+      // } else {
+      //   smooth_variable_z = 5;
+      //   smooth_variable = 5
+      // }
+      // // END CHANGE IMPLEMENTATION
+
+      stp = new Array(21)
       for (let index = 0; index < 21; index++) {
         // stp = prev + (new - prev) / smooth_variable
         stp[index] = {
           "x": old_coord[index].x + (unnormalised_landmarks[index].x - old_coord[index].x)/smooth_variable,
           "y": old_coord[index].y + (unnormalised_landmarks[index].y - old_coord[index].y)/smooth_variable,
-          "z": old_coord[index].z + (unnormalised_landmarks[index].z - old_coord[index].z)/smooth_variable
+          "z": old_coord[index].z + (unnormalised_landmarks[index].z - old_coord[index].z)/smooth_variable_z
         }
       }
 
@@ -216,10 +258,10 @@
       canvasCtx.fillStyle = "#7DF9FF";
       canvasCtx.fillText(alphabet_coords[0], basecoords[0], basecoords[1]+70);
 
-    // END SMOOTHENING
+    // END SMOOTHENING ====================================================================
 
 
-      // Rolling Average Implementation
+      // Rolling Average Implementation ===================================================
       frame_averages[counter] = prediction.arraySync()[0];
 
       for (var j = 0; j < avg_of_frames; j++) {
@@ -240,7 +282,7 @@
       if (counter == avg_of_frames) {
         counter = 0;
       }
-      //End of Rolling Average
+      //End of Rolling Average =============================================================
 
       // Write letter
       canvasCtx.font = "bolder 90px Arial";
@@ -255,7 +297,7 @@
       }
 
 
-      // Mediapipe Drawings
+      // Mediapipe Drawings ========================================================
       for (let index = 0; index < results.multiHandLandmarks.length; index++) {
 
         const classification = results.multiHandedness[index];
@@ -271,7 +313,7 @@
           color:'#fb3640',
           fillColor:'#fcf7f8',
           radius: (x) => {
-            return lerp(x.from.z, -0.15, .1, 10, 1);
+            return lerp(x.from.z, -0.15, .1, 8, 1);
           }
         });
 
@@ -289,6 +331,19 @@
         }
       }
     }
+    // else {
+    //   drawConnectors(
+    //             canvasCtx, stp, HAND_CONNECTIONS,
+    //             {color: '#7df9ff', lineWidth: 5}),
+    //
+    //     drawLandmarks(canvasCtx, stp, {
+    //       color:'#fb3640',
+    //       fillColor:'#fcf7f8',
+    //       radius: (x) => {
+    //         return lerp(x.from.z, -0.15, .1, 8, 1);
+    //       }
+    //     });
+    // }
     canvasCtx.restore();
   }
 
