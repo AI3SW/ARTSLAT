@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset="utf-8">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+  <script src="./bundle.js"></script>
+  <script src="./functions.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <p id="demo1"></p>
+    <canvas class="output_canvas"  width="1280px" height="720px">
+      <video class="input_video"></video>
+    </canvas>
+    <p id="demo2"></p>
+  </div>
+</body>
+</html>
+
+<!--<style>-->
+<!--  body {background-color: #000000;}-->
+<!--</style>-->
+
+
+
+<script type="module">
+
+  const model = await tf.loadLayersModel('./model.json')
+
+  const videoElement = document.getElementsByClassName('input_video')[0];
+  const canvasElement = document.getElementsByClassName('output_canvas')[0];
+  const canvasCtx = canvasElement.getContext('2d');
+
+
+  const classconversion = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'H',
+                   8: 'I', 9: 'J', 10: 'K', 11: 'L', 12: 'M', 13: 'N', 14: 'O',
+                   15: 'P', 16: 'Q', 17: 'R', 18: 'S', 19: 'T', 20: 'U', 21: 'V',
+                   22: 'W', 23: 'X', 24: 'Y', 25: 'Z', 26: 'del', 27: 'nothing', 28: 'space'}
+
+
+ // Rolling Average Variables
+  const avg_of_frames = 5;
+  var frame_averages = new Array(avg_of_frames);
+  for (var i = 0; i < frame_averages.length; i++) {
+    frame_averages[i] = new Array(42).fill(0);
+  }
+  var counter = 0;
+  var rolling = new Array(42).fill(0);
+  const min_accuracy = 0.5;
+
+
+  function onResults(results) {
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(
+        results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+    if (results.multiHandLandmarks) {
+
+      //Predict
+      var normalised_landmarks = Normalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width);
+      var format_lms = tf.stack(normalised_landmarks).reshape([1,42,1]);
+      const prediction = model.predict(format_lms);
+
+
+      //Rolling Average
+      frame_averages[counter] = prediction.arraySync()[0];
+
+      for (var j = 0; j < avg_of_frames; j ++){
+        for (var p = 0; p < 42; p ++) {
+          rolling[p] = rolling[p] + frame_averages[j][p];
+        }
+      }
+
+      var index = indexOfMax(rolling);
+      if (rolling[index] >= min_accuracy * avg_of_frames) {
+        var letter = classconversion[index];
+      } else {
+        var letter = '';
+      }
+      rolling = new Array(42).fill(0); // RESET ROLLING
+
+      counter = counter + 1;
+      if (counter == avg_of_frames) {
+        counter = 0;
+      }
+
+      canvasCtx.font = "bolder 30px Arial";
+      canvasCtx.fillText(letter, 10, 50);
+      document.getElementById("demo2").innerHTML = letter;
+      //End of Rolling Average
+
+
+      //Mediapipe Drawings
+      for (let index = 0; index < results.multiHandLandmarks.length; index++) {
+
+        const classification = results.multiHandedness[index];
+        const isRightHand = classification.label === 'Right';
+        const landmarks = results.multiHandLandmarks[index];
+
+        drawConnectors(
+            canvasCtx, landmarks, HAND_CONNECTIONS,
+            {color: isRightHand ? '#00ff00' : '#FF0000'}),
+
+        drawLandmarks(canvasCtx, landmarks, {
+          color: isRightHand ? '#00FF00' : '#FF0000',
+          fillColor: isRightHand ? '#FF0000' : '#00FF00',
+          radius: (x) => {
+            return lerp(x.from.z, -0.15, .1, 10, 1);
+          }
+        });
+      }
+    }
+    canvasCtx.restore();
+  }
+
+
+  const hands = new Hands({locateFile: (file) => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+  }});
+
+
+  hands.setOptions({
+    maxNumHands: 2,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.5
+  });
+
+
+  hands.onResults(onResults);
+
+
+  const camera = new Camera(videoElement, {
+    onFrame: async () => {
+      await hands.send({image: videoElement});
+    },
+    width: 1920,
+    height: 1080
+  });
+
+
+  camera.start();
+
+
+</script>
