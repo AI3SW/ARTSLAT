@@ -1,13 +1,11 @@
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Activation, Dense, Flatten, Dropout
 from tensorflow.keras.optimizers import Adam
 import numpy as np
 import csv
-from tensorflow.keras.metrics import categorical_crossentropy
-import random
+from tensorflow.keras.utils import to_categorical
+
 
 '''
 --------------------------------------------
@@ -44,16 +42,14 @@ with open('landmark.csv') as csv_file:
         row_count += 1
 
 
-#vallength = int(datalength * 0.2)  # 20% val
+indexs = list(range(0, datalength, 5)) # Every 5th letter is a validation image (80-20 split)
 
-#indexs = random.sample(range(0, datalength), 2*vallength)
-indexs = list(range(0, datalength, 5))
-
-
-vallength = len(indexs)
-X_val = np.zeros((vallength, 42))
+vallength = len(indexs) # Length of validation set
+X_val = np.zeros((vallength, 42)) # Initialise numpy array first
 Y_val = np.array([[]])
 
+
+# Add the correct validation data to X_Val and Y_val
 for num in range(vallength):
     index = indexs[num]
     X_coords = X[index,:]
@@ -63,28 +59,22 @@ for num in range(vallength):
 
     Y_val = np.append(Y_val, Y[index])
 
-# del indexes from Y and X ONLY AFTER EVERYTHING
+
+# del indexes from Y and X (removes val data from train data)
 Y_train = np.delete(Y, indexs)
 X_train = np.delete(X, indexs, axis = 0)
 
 
-from tensorflow.keras.utils import to_categorical
-
 Y_train_cat = to_categorical(Y_train, 29)
 Y_val_cat = to_categorical(Y_val, 29)
+
 
 train_dataset = tf.data.Dataset.from_tensor_slices((X_train,Y_train_cat)).batch(30)
 val_dataset = tf.data.Dataset.from_tensor_slices((X_val,Y_val_cat)).batch(30)
 
-"""
-import gc
-del X_data
-del y_data
-gc.collect()
-"""
 '''
 --------------------------------------------
-Sequential Model for Keras
+Training the model
 --------------------------------------------
 '''
 
@@ -114,5 +104,5 @@ model.fit(x = train_dataset,
           )
 
 import os.path
-if os.path.isfile('77.h5') is False:
-    model.save('30to300epoch.h5')
+if os.path.isfile('test.h5') is False:
+    model.save('test.h5')

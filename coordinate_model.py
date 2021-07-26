@@ -1,8 +1,5 @@
-import time
 import cv2
-import mediapipe as mp
 import numpy as np
-import tensorflow as tf
 
 from tensorflow.keras.models import load_model
 
@@ -28,21 +25,21 @@ def main():
     cap = cv2.VideoCapture(0)
     detector = handDetector(detectionCon=0.7)
 
-    avg_of_frame = 5
+    # Rolling Average Variables
+    avg_of_frame = 5 # How many frames to average before returning a value; Rolling avg
     counter = 1
-    confidence = 0.5
+    confidence = 0.5 # Confidence of rolling average before a letter is returned
     letter = 'Start'
     rolling = np.zeros((avg_of_frame,29))
 
     while True:
-        success, img = cap.read()
-        #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        success, img = cap.read() # Local Webcam
         img = detector.findHands(img,draw=True)
         landmarks = detector.findPosition(img)
 
-        if len(landmarks) != 0:
+        if len(landmarks) != 0: # If a hand is detected
             try:
-                normalised_landmarks = normalise_landmarks(landmarks)
+                normalised_landmarks = normalise_landmarks(landmarks) # Normalise input to parse through model
             except:
                 continue
             flat_landmarks  = [item for sublist in normalised_landmarks for item in sublist]
@@ -53,7 +50,8 @@ def main():
             predClass = predClass.numpy()
 
 
-            # Rolling Average Implementation
+            # Rolling Average Implementation =======================================================
+
             for id, element in enumerate(predClass[0]):
                 rolling[counter,id] = element
 
@@ -64,17 +62,10 @@ def main():
             letter = classconversion[index[0][0]] if maxprob>=confidence else ''
 
             counter = 0 if counter == avg_of_frame-1 else counter+1
-            # End rolling avg implementation
 
-        cv2.putText(img, str(letter), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3)
+            # End rolling avg implementation =======================================================
 
-        # FPS START --------------
-        # cTime = time.time()
-        # fps = 1 / (cTime-pTime)
-        # pTime = cTime
-
-        #cv2.putText(img, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3)
-        # FPS END -----------------
+        cv2.putText(img, str(letter), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3) # Add the letter onto the img
 
         cv2.imshow('Image', img)
         cv2.waitKey(1)
