@@ -22,7 +22,8 @@ $ python coordinate_model_sentence.py # Inteprets letters in a sentence
 ## Module Implementation
 
 ### Translator Module
-####```model_coordinate.py / translator.html```
+```model_coordinate.py / translator.html```
+
 The Mediapipe Hands module detects and tracks instances of hands, 
 returning them in a pictorial or coordinate form. In ARTSLAT, by using this particular
 [Dataset](https://www.kaggle.com/grassknoted/asl-alphabet)
@@ -45,7 +46,8 @@ with only 2 layers, a dense layer and a softmax layer. The weighted average of t
 of **0.95**.
 
 ### Trainer Module
-####```trainer.html```
+```trainer.html```
+
 Besides a translator, a trainer was envisioned to help teach the ASL letters. To do this, an signed letter
 is super imposed onto the users hand, by tracking the user's wrist joint and
 placing the alphabet on their joint. However, while this worked on a 2d image, it was sometimes difficult
