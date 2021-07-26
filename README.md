@@ -19,9 +19,9 @@ $ python coordinate_model_sentence.py # Inteprets letters in a sentence
 ```
 
 
-## Module Implementation
+## **Module Implementation**
 
-### Translator Module
+### **Translator Module**
 ```model_coordinate.py / translator.html```
 
 The Mediapipe Hands module detects and tracks instances of hands, 
@@ -45,7 +45,7 @@ extrapolate that data to output a given image. The model in particular was desig
 with only 2 layers, a dense layer and a softmax layer. The weighted average of the model gives an f1-score
 of **0.95**.
 
-### Trainer Module
+### **Trainer Module**
 ```trainer.html```
 
 Besides a translator, a trainer was envisioned to help teach the ASL letters. To do this, an signed letter
@@ -58,7 +58,7 @@ one could see a 3d representation of the signed letter. To track rotation, a for
 was required.
 
 #### Coordinate Transformation
-![planenormalmthd](https://i.imgur.com/uUFMetr.gif)
+![planenormalmthd](https://i.imgur.com/vKjryCh.gif)
 1. **_Assume the palm as a flat 2d plane in a 3d space_**
     * Let the origin be located at the wrist joint
     * Take 2 vectors, both starting at the wrist to the metacarpophalangeal 
