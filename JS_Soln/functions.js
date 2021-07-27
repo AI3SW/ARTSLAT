@@ -49,15 +49,15 @@ var thumby = lms[0][5].y;
 var thumbz = lms[0][5].z;
 
 //const normalised_lms = Normalise2(lms, height, width) //ONLY TO CALC ROTATION MATRIX
-const scale_factor = ( ((thumbx-basex)**2) + ((thumby-basey)**2))**0.5;
+const scale_factor = ( ((thumbx-basex)**2) + ((thumby-basey)**2) + ((thumbz-basez)**2))**0.5;
 
 //NORMAL VECTOR CALCULATION
-const base_vector05 = [alphabet_coord[15+1],alphabet_coord[15+2],alphabet_coord[15+3]] //+1 cos the first item in alpha coord is the letter
-const base_vector017 = [alphabet_coord[51+1],alphabet_coord[51+2],alphabet_coord[51+3]]
+const base_vector05 = [alphabet_coord[15+1],alphabet_coord[15+2],alphabet_coord[15+3] ] //+1 cos the first item in alpha coord is the letter
+const base_vector017 = [alphabet_coord[51+1],alphabet_coord[51+2],alphabet_coord[51+3] ]
 const base_normalvector = math.cross(base_vector05, base_vector017)
 
-const dest_vector05 = [(thumbx-basex), (thumby-basey), (thumbz-basez)]
-const dest_vector017 = [(lms[0][17].x-basex), (lms[0][17].y-basey), (lms[0][17].z-basez)]
+const dest_vector05 = [(thumbx-basex), (thumby-basey), (thumbz-basez) *2 ] // *2 as responsiveness increases with a larger z value
+const dest_vector017 = [(lms[0][17].x-basex), (lms[0][17].y-basey), (lms[0][17].z-basez) *2 ]
 const dest_normalvector = math.cross(dest_vector05,dest_vector017)
 
 const RM = rotationmatrix(base_normalvector,dest_normalvector)
@@ -102,3 +102,14 @@ for (var i = 1; i < arr.length; i++) {
 
 return maxIndex;
 }
+
+
+// Given an array, returns the average of column number == num
+function Average(arr,counted,num){
+    var avg = 0
+    for (var l=0; l < counted; l++){
+      avg = avg + arr[l][num]
+    }
+    avg = avg/counted
+    return avg
+  }

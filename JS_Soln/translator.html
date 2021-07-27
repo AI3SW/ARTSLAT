@@ -79,6 +79,7 @@
       }
 
       var index = indexOfMax(rolling);
+
       if (rolling[index] >= min_accuracy * avg_of_frames) {
         var letter = classconversion[index];
       } else {
@@ -91,9 +92,10 @@
         counter = 0;
       }
 
-      canvasCtx.font = "bolder 30px Arial";
-      canvasCtx.fillText(letter, 10, 50);
-      document.getElementById("demo2").innerHTML = letter;
+
+      canvasCtx.font = "bolder 90px Arial";
+      canvasCtx.fillStyle = "#000000";
+      canvasCtx.fillText(letter, 30, 80);
       //End of Rolling Average
 
 

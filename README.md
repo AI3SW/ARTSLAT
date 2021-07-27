@@ -9,7 +9,7 @@ create a lightweight translator that uses a webcam to detect the correct ASL sig
 
 ### _Javascript_
 
-Download and run the ???? .html file located under the **_JS_Soln_** directory.
+Download and run the Home.html file located under the **_JS_Soln_** directory.
 
 ### _Python_
 ``` bash
@@ -24,11 +24,8 @@ $ python coordinate_model_sentence.py # Inteprets letters in a sentence
 ### **Translator Module**
 ```model_coordinate.py / translator.html```
 
-The Mediapipe Hands module detects and tracks instances of hands, 
-returning them in a pictorial or coordinate form. In ARTSLAT, by using this particular
-[Dataset](https://www.kaggle.com/grassknoted/asl-alphabet)
-, I extracted the coordinates of the hands for each image and applied a form of normalisation
-before training a model on the data.
+The Mediapipe Hands module detects and tracks instances of hands, them in a coordinate form. In ARTSLAT, with this 
+[Dataset](https://www.kaggle.com/grassknoted/asl-alphabet), coordinates of the hands for each image were extracted and normalised before training a model on the data.
 
 #### Normalisation
 1. **_Changing the origin_**
@@ -40,35 +37,25 @@ before training a model on the data.
     * Thus in the final product, hand sizes and its distance to the camera is inconsequential
     
 
-The model is expected to then recognise the relationship between the different joints, and
-extrapolate that data to output a given image. The model in particular was designed to be lightweight
-with only 2 layers, a dense layer and a softmax layer. The weighted average of the model gives an f1-score
-of **0.95**.
+The model is expected to recognise the relationship between the different joints, and extrapolate the data to output a letter. The model in particular was designed to be lightweight with only 2 layers but still achieved a weighted f1-score of **0.95**.
 
 ### **Trainer Module**
 ```trainer.html```
 
-Besides a translator, a trainer was envisioned to help teach the ASL letters. To do this, an signed letter
-is super imposed onto the users hand, by tracking the user's wrist joint and
-placing the alphabet on their joint. However, while this worked on a 2d image, it was sometimes difficult
-for users to visualise the proper sign.
+A trainer to teach the ASL letters was created by superimposing a letter (guide hand) onto the user's hand, by tracking the user's wrist joint and placing the guide hand at the point. However, it was sometimes difficult for users to visualise the proper sign as some signs needed 3D representation.
 
-Thus, an attempt was made to map the signed letter onto the user's palm so that, by rotating their hand,
-one could see a 3d representation of the signed letter. To track rotation, a form of tranformation of the signed letter
-was required.
+Thus, an AR representation of the signed letter was created so that, by just rotating one's hand, one could see a 3d representation of the signed letter. However, to track rotation, the guide hand had to undergo a transformation.
 
 #### Coordinate Transformation
 ![planenormalmthd](https://i.imgur.com/vKjryCh.gif)
-1. **_Assume the palm as a flat 2d plane in a 3d space_**
-    * Let the origin be located at the wrist joint
+1. **_Assume the palm as a flat 2D plane in a 3D space_**
     * Take 2 vectors, both starting at the wrist to the metacarpophalangeal 
       joints of the index and pinky finger
-    * The plane is defined as a 2d plane containing these 2 vectors
+    * The plane is defined as a 2D plane containing these 2 vectors
     
 2. **_Find the normal vectors_**
-    * A simple representation of a plane is through its normal vector
-    * Done by the cross product of the index vector to the pinky vector
-
+    * Cross product of the index vector to the pinky vector
+   
 3. **_Find the rotation matrix between the normal vector_**
     * Differences in normal vector indicate how much the 2d plane has to be rotated by to fit the other 2d plane
 
@@ -76,3 +63,15 @@ was required.
 
 This allows the signed letter to follow the user's palm to see the correct shapes in a pseudo-augmented-reality representation.
 
+
+## Limitations
+
+* The Dataset the model trained on could be better, and seems to conflict with some variants
+of the ASL sign letters. _(See letter 'T')_
+  * Data scrubbing needs to be done to increase accuracy
+  
+* The trainer module has difficulties when the user's hand is flipped
+   * Conditional smoothing should be implemented to reduce inaccuracies
+
+* Certain letters are difficult to display due to the letters requiring x or y axis rotation
+of the hand _(See letter 'P')_
