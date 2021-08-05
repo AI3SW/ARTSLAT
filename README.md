@@ -9,7 +9,8 @@ create a lightweight translator that uses a webcam to detect the correct ASL sig
 
 ### _Javascript_
 
-Download and run the Home.html file located under the **_JS_Soln_** directory.
+For either the translator or the trainer module, run the relevant html file under /JS_Soln. For the source code of https://bryanongse.github.io/ARTSLAT/ go to
+JS_Soln/website_html.
 
 ### _Python_
 ``` bash
