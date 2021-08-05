@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html style="font-size: 16px;">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
+    <meta name="keywords" content="$10 Off withEmail Signup">
+    <meta name="description" content="">
+    <meta name="page_type" content="np-template-header-footer-from-plugin">
+    <title>Translator</title>
+    <link rel="stylesheet" href="nicepage.css" media="screen">
+    <link rel="stylesheet" href="translator.css" media="screen">
+    <script class="u-script" type="text/javascript" src="jquery-1.9.1.min.js" defer=""></script>
+    <script class="u-script" type="text/javascript" src="nicepage.js" defer=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+    <script src="./bundle.js"></script>
+    <script src="./functions.js"></script>
+    <link id="u-theme-google-font" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i|Open+Sans:300,300i,400,400i,600,600i,700,700i,800,800i">
+    
+    
+    <script type="application/ld+json">{
+		"@context": "http://schema.org",
+		"@type": "Organization",
+		"name": "",
+		"logo": "images/default-logo.png"
+}</script>
+    <meta name="theme-color" content="#f15048">
+    <meta property="og:title" content="Translator">
+    <meta property="og:type" content="website">
+  </head>
+  <body class="u-body"><header class="u-clearfix u-header u-header" id="sec-2bc8"><div class="u-clearfix u-sheet u-sheet-1">
+        <nav class="u-align-left u-menu u-menu-dropdown u-nav-spacing-25 u-offcanvas u-menu-1">
+          <div class="menu-collapse" style="font-size: 1rem; letter-spacing: 0px; font-weight: 700; text-transform: uppercase;">
+            <a class="u-button-style u-custom-active-border-color u-custom-border u-custom-border-color u-custom-borders u-custom-color u-custom-hover-border-color u-custom-padding-bottom u-custom-text-active-color u-custom-text-color u-custom-text-hover-color u-custom-top-bottom-menu-spacing u-nav-link" href="#" style="padding: 0px; font-size: calc(1em + 0.5px);">
+              <svg class="u-svg-link" preserveAspectRatio="xMidYMin slice" viewBox="0 0 302 302" style="undefined"><use xlink:href="#svg-7b92"></use></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="svg-7b92" x="0px" y="0px" viewBox="0 0 302 302" style="enable-background:new 0 0 302 302;" xml:space="preserve" class="u-svg-content"><g><rect y="36" width="302" height="30"></rect><rect y="236" width="302" height="30"></rect><rect y="136" width="302" height="30"></rect>
+</g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g><g></g></svg>
+            </a>
+          </div>
+          <div class="u-custom-menu u-nav-container">
+            <ul class="u-custom-font u-heading-font u-nav u-spacing-30 u-unstyled u-nav-1"><li class="u-nav-item"><a class="u-border-2 u-border-active-palette-5-base u-border-hover-palette-5-base u-border-no-left u-border-no-right u-border-no-top u-button-style u-nav-link u-text-active-palette-5-base u-text-grey-90 u-text-hover-grey-90" href="index.html" style="padding: 10px 0px;">Home</a>
+</li><li class="u-nav-item"><a class="u-border-2 u-border-active-palette-5-base u-border-hover-palette-5-base u-border-no-left u-border-no-right u-border-no-top u-button-style u-nav-link u-text-active-palette-5-base u-text-grey-90 u-text-hover-grey-90" href="translator.html" style="padding: 10px 0px;">Translator</a>
+</li><li class="u-nav-item"><a class="u-border-2 u-border-active-palette-5-base u-border-hover-palette-5-base u-border-no-left u-border-no-right u-border-no-top u-button-style u-nav-link u-text-active-palette-5-base u-text-grey-90 u-text-hover-grey-90" href="trainer.html" style="padding: 10px 0px;">Trainer</a>
+</li><li class="u-nav-item"><a class="u-border-2 u-border-active-palette-5-base u-border-hover-palette-5-base u-border-no-left u-border-no-right u-border-no-top u-button-style u-nav-link u-text-active-palette-5-base u-text-grey-90 u-text-hover-grey-90" href="About.html" style="padding: 10px 0px;">About</a>
+</li></ul>
+          </div>
+          <div class="u-custom-menu u-nav-container-collapse">
+            <div class="u-align-center u-black u-container-style u-inner-container-layout u-opacity u-opacity-95 u-sidenav">
+              <div class="u-sidenav-overflow">
+                <div class="u-menu-close"></div>
+                <ul class="u-align-center u-nav u-popupmenu-items u-unstyled u-nav-2"><li class="u-nav-item"><a class="u-button-style u-nav-link" href="index.html" style="padding: 8px 0px;">Home</a>
+</li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="translator.html" style="padding: 8px 0px;">Translator</a>
+</li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="trainer.html" style="padding: 8px 0px;">Trainer</a>
+</li><li class="u-nav-item"><a class="u-button-style u-nav-link" href="About.html" style="padding: 8px 0px;">About</a>
+</li></ul>
+              </div>
+            </div>
+            <div class="u-black u-menu-overlay u-opacity u-opacity-70"></div>
+          </div>
+        </nav>
+        <a href="#" class="u-image u-logo u-image-1" src="">
+          <img src="images/default-logo.png" class="u-logo-image u-logo-image-1">
+        </a>
+      </div></header> 
+
+    <div class="container">
+    <canvas class="output_canvas" width="1280px" height="720px">
+      <video class="input_video"></video>
+    </canvas>
+  </div>
+
+  </body>
+</html>
+
+<script type="module">
+
+  const model = await tf.loadLayersModel('./model.json')
+
+  const videoElement = document.getElementsByClassName('input_video')[0];
+  const canvasElement = document.getElementsByClassName('output_canvas')[0];
+  const canvasCtx = canvasElement.getContext('2d');
+
+
+  const classconversion = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'H',
+                   8: 'I', 9: 'J', 10: 'K', 11: 'L', 12: 'M', 13: 'N', 14: 'O',
+                   15: 'P', 16: 'Q', 17: 'R', 18: 'S', 19: 'T', 20: 'U', 21: 'V',
+                   22: 'W', 23: 'X', 24: 'Y', 25: 'Z', 26: 'del', 27: 'nothing', 28: 'space'}
+
+
+ // Rolling Average Variables
+  const avg_of_frames = 5;
+  var frame_averages = new Array(avg_of_frames);
+  for (var i = 0; i < frame_averages.length; i++) {
+    frame_averages[i] = new Array(42).fill(0);
+  }
+  var counter = 0;
+  var rolling = new Array(42).fill(0);
+  const min_accuracy = 0.5;
+
+
+  function onResults(results) {
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(
+        results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+    if (results.multiHandLandmarks) {
+
+      //Predict
+      var normalised_landmarks = Normalise(results.multiHandLandmarks, canvasElement.height, canvasElement.width);
+      var format_lms = tf.stack(normalised_landmarks).reshape([1,42,1]);
+      const prediction = model.predict(format_lms);
+
+
+      //Rolling Average
+      frame_averages[counter] = prediction.arraySync()[0];
+
+      for (var j = 0; j < avg_of_frames; j ++){
+        for (var p = 0; p < 42; p ++) {
+          rolling[p] = rolling[p] + frame_averages[j][p];
+        }
+      }
+
+      var index = indexOfMax(rolling);
+
+      if (rolling[index] >= min_accuracy * avg_of_frames) {
+        var letter = classconversion[index];
+      } else {
+        var letter = '';
+      }
+      rolling = new Array(42).fill(0); // RESET ROLLING
+
+      counter = counter + 1;
+      if (counter == avg_of_frames) {
+        counter = 0;
+      }
+
+
+      canvasCtx.font = "bolder 90px Arial";
+      canvasCtx.fillStyle = "#00ff00";
+      canvasCtx.fillText(letter, 40, 100);
+      //End of Rolling Average
+
+
+      //Mediapipe Drawings
+      for (let index = 0; index < results.multiHandLandmarks.length; index++) {
+
+        const classification = results.multiHandedness[index];
+        const isRightHand = classification.label === 'Right';
+        const landmarks = results.multiHandLandmarks[index];
+
+        drawConnectors(
+            canvasCtx, landmarks, HAND_CONNECTIONS,
+            {color: isRightHand ? '#00ff00' : '#FF0000'}),
+
+        drawLandmarks(canvasCtx, landmarks, {
+          color: isRightHand ? '#00FF00' : '#FF0000',
+          fillColor: isRightHand ? '#FF0000' : '#00FF00',
+          radius: (x) => {
+            return lerp(x.from.z, -0.15, .1, 10, 1);
+          }
+        });
+      }
+    }
+    canvasCtx.restore();
+  }
+
+
+  const hands = new Hands({locateFile: (file) => {
+    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+  }});
+
+
+  hands.setOptions({
+    maxNumHands: 2,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.5
+  });
+
+
+  hands.onResults(onResults);
+
+
+  const camera = new Camera(videoElement, {
+    onFrame: async () => {
+      await hands.send({image: videoElement});
+    },
+    width: 1920,
+    height: 1080
+  });
+
+
+  camera.start();
+
+
+</script>
